@@ -159,7 +159,7 @@ private:
 
     void initSockets() {
         UDP_listener = new UDP_Listener(LISTEN_PORT, nullptr, nullptr);
-        UDP_listener->run();
+        UDP_listener->startThread();
     }
 
     void prepareToPlay([[maybe_unused]] int samplesPerBlockExpected, [[maybe_unused]] double sampleRate) override {
