@@ -42,8 +42,10 @@ public:
 //        assert(protectOutput != nullptr);
         while (!threadShouldExit()) {
             char buffer[40];
-            std::cout << UDP_Socket->read(buffer, 40, true) << std::endl;
-            std::cout << buffer << std::endl;
+            juce::String sender_ip;
+            int sender_port;
+            int len = UDP_Socket->read(buffer, 40, true, sender_ip, sender_port);
+            std::cout << "Pack from " << sender_ip << ":" << sender_port << " with length " << len << "(bytes) and content: " << buffer << std::endl;
         }
     }
 
