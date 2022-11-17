@@ -41,6 +41,7 @@ macro(setup name)
             include/writer.h
             include/utils.cpp
             include/utils.h
+            include/main.cpp
             )
 endmacro(setup)
 
@@ -49,18 +50,15 @@ setup(${NODE2})
 setup(${NODE3})
 target_sources(${NODE1}
         PRIVATE
-        Node1/main.cpp
-        Node1/Node1.h
+        Node1/Node.h
         )
 target_sources(${NODE2}
         PRIVATE
-        Node2/main.cpp
-        Node2/Node2.h
+        Node2/Node.h
         )
 target_sources(${NODE3}
         PRIVATE
-        Node3/main.cpp
-        Node3/Node3.h
+        Node3/Node.h
         )
 
 include_directories(${Boost_INCLUDE_DIR})
