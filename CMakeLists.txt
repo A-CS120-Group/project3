@@ -42,6 +42,8 @@ macro(setup name)
             include/utils.cpp
             include/utils.h
             include/main.cpp
+            include/UDP_Listener.h
+            include/UDP_Sender.h
             )
 endmacro(setup)
 
@@ -49,7 +51,7 @@ setup(${NODE1})
 setup(${NODE2})
 setup(${NODE3})
 target_include_directories(${NODE1} PRIVATE Node1)
-target_include_directories(${NODE1} PRIVATE Node2)
-target_include_directories(${NODE1} PRIVATE Node3)
+target_include_directories(${NODE2} PRIVATE Node2)
+target_include_directories(${NODE3} PRIVATE Node3)
 
 include_directories(${Boost_INCLUDE_DIR})
