@@ -157,7 +157,10 @@ private:
         writer = new Writer(&directOutput, &directOutputLock, &quiet);
     }
 
-    void initSockets() { UDP_listener = new UDP_Listener(LISTEN_PORT, nullptr, nullptr); }
+    void initSockets() {
+        UDP_listener = new UDP_Listener(LISTEN_PORT, nullptr, nullptr);
+        UDP_listener->run();
+    }
 
     void prepareToPlay([[maybe_unused]] int samplesPerBlockExpected, [[maybe_unused]] double sampleRate) override {
         initThreads();

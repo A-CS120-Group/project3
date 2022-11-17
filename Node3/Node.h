@@ -6,6 +6,7 @@
 #pragma once
 #define SENDER_PORT 2468
 #define LISTEN_PORT 1357
+#define IP "192.168.1.100"
 
 class MainContentComponent : public Component {
 public:
@@ -21,7 +22,10 @@ public:
         TestButton.setSize(80, 40);
         TestButton.setCentrePosition(150, 140);
         TestButton.onClick = [=]() {
-
+            char here[40] = "This is a sentence, This is a sentence!";
+            for (int i = 0; i < 10; ++i) {
+                UDP_sender->send(here, IP, LISTEN_PORT);
+            }
         };
         addAndMakeVisible(TestButton);
 
