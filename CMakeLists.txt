@@ -48,17 +48,8 @@ endmacro(setup)
 setup(${NODE1})
 setup(${NODE2})
 setup(${NODE3})
-target_sources(${NODE1}
-        PRIVATE
-        Node1/Node.h
-        )
-target_sources(${NODE2}
-        PRIVATE
-        Node2/Node.h
-        )
-target_sources(${NODE3}
-        PRIVATE
-        Node3/Node.h
-        )
+target_include_directories(${NODE1} PRIVATE Node1)
+target_include_directories(${NODE1} PRIVATE Node2)
+target_include_directories(${NODE1} PRIVATE Node3)
 
 include_directories(${Boost_INCLUDE_DIR})

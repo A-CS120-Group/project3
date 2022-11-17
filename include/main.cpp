@@ -1,4 +1,4 @@
-#include "Node.h"
+#include <Node.h>
 #include <JuceHeader.h>
 
 class Application : public juce::JUCEApplication {
