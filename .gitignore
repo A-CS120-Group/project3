@@ -1,6 +1,5 @@
 .idea/
 JUCE/*
-.clang-format
 
 ### C++ template
 # Prerequisites
