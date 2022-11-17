@@ -1,13 +1,15 @@
 cmake_minimum_required(VERSION 3.23)
 set(CMAKE_CXX_STANDARD 17)
-add_subdirectory(JUCE)
 
 set(NODE1 "Node1")
 set(NODE2 "Node2")
 set(NODE3 "Node3")
+project(${NODE1} VERSION 0.0.1)
+project(${NODE2} VERSION 0.0.1)
+project(${NODE3} VERSION 0.0.1)
+add_subdirectory(JUCE)
 
 macro(setup name)
-    project(${name} VERSION 0.0.1)
     juce_add_gui_app(${name} PRODUCT_NAME ${name})
     juce_generate_juce_header(${name})
     target_link_libraries(${name}
