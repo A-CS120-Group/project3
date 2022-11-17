@@ -3,10 +3,10 @@
 #include "../include/writer.h"
 #include <JuceHeader.h>
 #include <fstream>
+#include <map>
 #include <queue>
 #include <thread>
 #include <vector>
-#include <map>
 
 #pragma once
 
@@ -63,8 +63,7 @@ public:
                     // It's a frame
                     if (frame.len != 0) {
                         // ignore self sent
-                        if (isNode1 ? frame.seq > 0 : frame.seq < 0)
-                            continue;
+                        if (isNode1 ? frame.seq > 0 : frame.seq < 0) continue;
                         fprintf(stderr, "frame received, seq = %d\n", frame.seq);
                         // Accept this frame and update LFR
                         frameListRec[seqNum] = frame;
@@ -79,15 +78,13 @@ public:
                             std::ofstream fOut("OUTPUT.bin", std::ios::binary | std::ios::out);
                             for (auto iter: frameListRec) {
                                 if (iter.first == 1) continue;
-                                for (unsigned i = 0; i < iter.second.len; ++i)
-                                    fOut.put(iter.second.body[i]);
+                                for (unsigned i = 0; i < iter.second.len; ++i) fOut.put(iter.second.body[i]);
                             }
                         }
-                    } else { // It's an ACK
+                    } else {// It's an ACK
                         if (LAR < seqNum && seqNum <= LFS) {
                             info[LFS - seqNum].receiveACK = true;
-                            fprintf(stderr, "ACK %d received after %lfs, resendTimes left %d\n", frame.seq,
-                                    info[LFS - seqNum].timer.duration(), info[LFS - seqNum].resendTimes);
+                            fprintf(stderr, "ACK %d received after %lfs, resendTimes left %d\n", frame.seq, info[LFS - seqNum].timer.duration(), info[LFS - seqNum].resendTimes);
                         }
                     }
                 }
@@ -96,15 +93,11 @@ public:
                     ++LAR;
                     info.pop_back();
                     // every frame to the other Node is ACKed
-                    if (!ACKedAll && LAR == (unsigned) frameNumSent)
-                        ACKedAll = true;
+                    if (!ACKedAll && LAR == (unsigned) frameNumSent) ACKedAll = true;
                 }
                 // resend timeout frames
                 for (unsigned seq = LAR + 1; seq <= LFS; ++seq) {
-                    if (info[LFS - seq].receiveACK ||
-                        info[LFS - seq].timer.duration() < (isNode1 ? SLIDING_WINDOW_TIMEOUT_NODE1
-                                                                    : SLIDING_WINDOW_TIMEOUT_NODE2))
-                        continue;
+                    if (info[LFS - seq].receiveACK || info[LFS - seq].timer.duration() < (isNode1 ? SLIDING_WINDOW_TIMEOUT_NODE1 : SLIDING_WINDOW_TIMEOUT_NODE2)) continue;
                     if (info[LFS - seq].resendTimes == 0) {
                         fprintf(stderr, "Link error detected! frame seq = %d resend too many times...\n", seq);
                         return;
@@ -131,11 +124,11 @@ public:
         titleLabel.setCentrePosition(300, 40);
         addAndMakeVisible(titleLabel);
 
-        Node1Button.setButtonText("Node1");
-        Node1Button.setSize(80, 40);
-        Node1Button.setCentrePosition(150, 140);
-        Node1Button.onClick = [] { return MacLayer(true); };
-        addAndMakeVisible(Node1Button);
+        TestButton.setButtonText("Node1");
+        TestButton.setSize(80, 40);
+        TestButton.setCentrePosition(150, 140);
+        TestButton.onClick = [] { return MacLayer(true); };
+        addAndMakeVisible(TestButton);
 
         Node2Button.setButtonText("Node2");
         Node2Button.setSize(80, 40);
@@ -160,7 +153,7 @@ private:
         initThreads();
         AudioDeviceManager::AudioDeviceSetup currentAudioSetup;
         deviceManager.getAudioDeviceSetup(currentAudioSetup);
-        currentAudioSetup.bufferSize = 144; // 144 160 192
+        currentAudioSetup.bufferSize = 144;// 144 160 192
         // String ret = deviceManager.setAudioDeviceSetup(currentAudioSetup, true);
         fprintf(stderr, "Main Thread Start\n");
     }
@@ -187,26 +180,25 @@ private:
                 for (int i = bufferSize - LENGTH_PREAMBLE * LENGTH_OF_ONE_BIT; i < bufferSize; ++i)
                     if (fabs(data[i]) > NOISY_THRESHOLD) {
                         nowQuiet = false;
-//                        fprintf(stderr, "\t\tNoisy Now!!!!\n");
-//                        std::ofstream logOut("log.out", std::ios::app);
-//                        for (int j = 0; j < bufferSize; ++j)logOut << (int) (data[j] * 100) << ' ';
-//                        logOut << "\n";
-//                        logOut.close();
+                        //                        fprintf(stderr, "\t\tNoisy Now!!!!\n");
+                        //                        std::ofstream logOut("log.out", std::ios::app);
+                        //                        for (int j = 0; j < bufferSize; ++j)logOut << (int) (data[j] * 100) << ' ';
+                        //                        logOut << "\n";
+                        //                        logOut.close();
                         break;
                     }
                 quiet.set(nowQuiet);
                 buffer->clear();
                 // Write if PHY layer wants
                 float *writePosition = buffer->getWritePointer(channel);
-                for (int i = 0; i < bufferSize; ++i)
-                    writePosition[i] = 0.0f;
-//                constexpr int W = 2;
-//                constexpr int bits[16] = {1,1,1,1,0,1,1,1,
-//                                          1,1,1,1,0,1,1,1};
-//                for (int i = 0; i < 16; ++i) {
-//                    writePosition[4 * i + 0] = writePosition[4 * i + 1] = bits[i] ? 1.0f : -1.0f;
-//                    writePosition[4 * i + 2] = writePosition[4 * i + 3] = bits[i] ? -1.0f : 1.0f;
-//                }
+                for (int i = 0; i < bufferSize; ++i) writePosition[i] = 0.0f;
+                //                constexpr int W = 2;
+                //                constexpr int bits[16] = {1,1,1,1,0,1,1,1,
+                //                                          1,1,1,1,0,1,1,1};
+                //                for (int i = 0; i < 16; ++i) {
+                //                    writePosition[4 * i + 0] = writePosition[4 * i + 1] = bits[i] ? 1.0f : -1.0f;
+                //                    writePosition[4 * i + 2] = writePosition[4 * i + 3] = bits[i] ? -1.0f : 1.0f;
+                //                }
                 directOutputLock.enter();
                 for (int i = 0; i < bufferSize; ++i) {
                     if (directOutput.empty()) {
@@ -243,7 +235,7 @@ private:
 
     // GUI related
     juce::Label titleLabel;
-    juce::TextButton Node1Button;
+    juce::TextButton TestButton;
     juce::TextButton Node2Button;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainContentComponent)

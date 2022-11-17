@@ -37,8 +37,9 @@ public:
     }
 
     void run() override {
-        assert(output != nullptr);
-        assert(protectOutput != nullptr);
+        // TODO: temporarily unused
+//        assert(output != nullptr);
+//        assert(protectOutput != nullptr);
         while (!threadShouldExit()) {
             char buffer[40];
             std::cout << UDP_Socket->read(buffer, 40, true) << std::endl;

@@ -1,5 +1,5 @@
-#include "../include/utils.h"
 #include "../include/UDP_Sender.h"
+#include "../include/utils.h"
 #include <JuceHeader.h>
 #include <thread>
 
@@ -17,13 +17,13 @@ public:
         titleLabel.setCentrePosition(300, 40);
         addAndMakeVisible(titleLabel);
 
-        Node1Button.setButtonText("Send");
-        Node1Button.setSize(80, 40);
-        Node1Button.setCentrePosition(150, 140);
-        Node1Button.onClick = [=]() {
+        TestButton.setButtonText("Send");
+        TestButton.setSize(80, 40);
+        TestButton.setCentrePosition(150, 140);
+        TestButton.onClick = [=]() {
 
         };
-        addAndMakeVisible(Node1Button);
+        addAndMakeVisible(TestButton);
 
         Node2Button.setButtonText("Node2");
         Node2Button.setSize(80, 40);
@@ -36,21 +36,18 @@ public:
         initSockets();
     }
 
-    void initSockets() {
-        UDP_sender = new UDP_Sender(SENDER_PORT);
-    }
+    void initSockets() { UDP_sender = new UDP_Sender(SENDER_PORT); }
 
-    void destroySockets() {
-
-    }
+    void destroySockets() { delete UDP_sender; }
 
     ~MainContentComponent() override { destroySockets(); }
 
 private:
     // GUI related
     juce::Label titleLabel;
-    juce::TextButton Node1Button;
+    juce::TextButton TestButton;
     juce::TextButton Node2Button;
+
     // Ethernet related
     UDP_Sender *UDP_sender{nullptr};
 
