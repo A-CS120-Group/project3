@@ -86,3 +86,5 @@ struct FrameWaitingInfo {
     MyTimer timer;
     int resendTimes = 20;
 };
+
+std::string readConfig(int lineNum);
