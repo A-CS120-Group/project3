@@ -8,6 +8,7 @@ project(${NODE1} VERSION 0.0.1)
 project(${NODE2} VERSION 0.0.1)
 project(${NODE3} VERSION 0.0.1)
 add_subdirectory(JUCE)
+file(GLOB INCLUDE_FILE include/*.h include/*.cpp)
 
 macro(setup name)
     juce_add_gui_app(${name} PRODUCT_NAME ${name})
@@ -39,13 +40,7 @@ macro(setup name)
             juce::juce_recommended_warning_flags)
     target_sources(${name}
             PRIVATE
-            include/reader.h
-            include/writer.h
-            include/utils.cpp
-            include/utils.h
-            include/main.cpp
-            include/UDP_Listener.h
-            include/UDP_Sender.h
+            ${INCLUDE_FILE}
             )
 endmacro(setup)
 

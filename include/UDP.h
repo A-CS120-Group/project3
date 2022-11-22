@@ -1,5 +1,5 @@
-#ifndef UDP_LISTENER_H
-#define UDP_LISTENER_H
+#ifndef UDP_H
+#define UDP_H
 
 #include "utils.h"
 #include <JuceHeader.h>
@@ -7,29 +7,27 @@
 #include <ostream>
 #include <queue>
 
-#define LISTEN_PORT 1357
-
 // TODO: Node 2 and Node 3 should both receive and send
 
-class UDP_Listener : public Thread {
+class UDP : public Thread {
 public:
-    UDP_Listener() = delete;
+    UDP() = delete;
 
-    UDP_Listener(const UDP_Listener &) = delete;
+    UDP(const UDP &) = delete;
 
-    UDP_Listener(const UDP_Listener &&) = delete;
+    UDP(const UDP &&) = delete;
 
-    explicit UDP_Listener(int listen_port, std::queue<FrameType> *bufferOut, CriticalSection *lockOutput)
-            : Thread("UDP_Listener"), output(bufferOut), protectOutput(lockOutput), port(listen_port) {
+    explicit UDP(int listen_port, std::queue<FrameType> *bufferOut, CriticalSection *lockOutput)
+        : Thread("UDP"), output(bufferOut), protectOutput(lockOutput), port(listen_port) {
         UDP_Socket = new juce::DatagramSocket(false);
         if (!UDP_Socket->bindToPort(listen_port)) {
             std::cerr << "Port " << listen_port << " in use!" << std::endl;
             exit(listen_port);
         }
-        std::cerr << "UDP_Listener Thread Start\n" << std::endl;
+        std::cerr << "UDP Thread Start\n" << std::endl;
     }
 
-    ~UDP_Listener() override {
+    ~UDP() override {
         this->signalThreadShouldExit();
         this->waitForThreadToExit(1000);
         UDP_Socket->shutdown();
@@ -38,15 +36,19 @@ public:
 
     void run() override {
         // TODO: temporarily unused
-//        assert(output != nullptr);
-//        assert(protectOutput != nullptr);
+        //        assert(output != nullptr);
+        //        assert(protectOutput != nullptr);
         while (!threadShouldExit()) {
-            char buffer[40];
+            char buffer[41];
             juce::String sender_ip;
             int sender_port;
-            int len = UDP_Socket->read(buffer, 40, true, sender_ip, sender_port);
+            int len = UDP_Socket->read(buffer, 41, true, sender_ip, sender_port);
             std::cout << "Pack from " << sender_ip << ":" << sender_port << " with length " << len << "(bytes) and content: " << buffer << std::endl;
         }
+    }
+
+    void send(const std::string& buffer, const std::string &ip, int target_port) {
+        UDP_Socket->write(ip, target_port, buffer.c_str(), static_cast<int>(buffer.size()));
     }
 
 private:
@@ -57,4 +59,4 @@ private:
     juce::DatagramSocket *UDP_Socket{nullptr};
 };
 
-#endif//UDP_LISTENER_H
+#endif//UDP_H

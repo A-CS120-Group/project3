@@ -1,4 +1,5 @@
-#include "../include/UDP_Listener.h"
+#include "../include/UDP.h"
+#include "../include/config.h"
 #include "../include/reader.h"
 #include "../include/utils.h"
 #include "../include/writer.h"
@@ -10,8 +11,8 @@
 #include <vector>
 
 #pragma once
-#define SENDER_PORT 2468
-#define LISTEN_PORT 1357
+#define PORT 1234
+#define IP "192.168.1.100"
 
 class MainContentComponent : public juce::AudioAppComponent {
 public:
@@ -130,7 +131,12 @@ public:
         TestButton.setButtonText("Test");
         TestButton.setSize(80, 40);
         TestButton.setCentrePosition(150, 140);
-        TestButton.onClick = nullptr;
+        TestButton.onClick = [=]() {
+            std::string here = "This is a sentence, This is a sentence!";
+            for (int i = 0; i < 10; ++i) {
+                UDP_sock->send(here, IP, PORT);
+            }
+        };
         addAndMakeVisible(TestButton);
 
         Node2Button.setButtonText("Node2");
@@ -158,8 +164,8 @@ private:
     }
 
     void initSockets() {
-        UDP_listener = new UDP_Listener(LISTEN_PORT, nullptr, nullptr);
-        UDP_listener->startThread();
+        UDP_sock = new UDP(PORT, nullptr, nullptr);
+        UDP_sock->startThread();
     }
 
     void prepareToPlay([[maybe_unused]] int samplesPerBlockExpected, [[maybe_unused]] double sampleRate) override {
@@ -232,7 +238,7 @@ private:
         delete writer;
     }
 
-    void destroySockets() { delete UDP_listener; }
+    void destroySockets() { delete UDP_sock; }
 
 private:
     // Process Input
@@ -254,7 +260,7 @@ private:
     juce::TextButton Node2Button;
 
     // Ethernet related
-    UDP_Listener *UDP_listener{nullptr};
+    UDP *UDP_sock{nullptr};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainContentComponent)
 };
