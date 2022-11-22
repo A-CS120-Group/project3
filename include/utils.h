@@ -3,9 +3,7 @@
 #include <algorithm>
 #include <boost/crc.hpp>
 #include <chrono>
-#include <iostream>
-#include <utility>
-#include <vector>
+#include <functional>
 
 #define NOT_REACHED                                                                                                                                                                \
     do { exit(123); } while (false);
@@ -27,12 +25,6 @@ constexpr int MAX_LENGTH_BODY = MTU - LENGTH_PREAMBLE - LENGTH_LEN - LENGTH_TYPE
 
 const std::string preamble{0x55, 0x55, 0x54};
 
-constexpr float PREAMBLE_THRESHOLD = 0.3f;
-
-unsigned int crc32(const char *src, size_t srcSize);
-
-int judgeBit(float signal1, float signal2);
-
 IPType Str2IPType(const std::string &ip);
 
 std::string IPType2Str(IPType ip);
@@ -51,10 +43,8 @@ template<class T>
  * BODY
  * CRC
  */
-
 class FrameType {
 public:
-    enum { udp = 1, tcp = 2, ping = 3, pong = 4 };
     LENType len = 0;
     TYPEType type = 0;
     IPType ip = 0;
@@ -69,9 +59,13 @@ public:
 
     [[nodiscard]] unsigned int crc() const {
         auto str = wholeString();
-        return crc32(str.c_str(), str.size());
+        boost::crc_32_type crc;
+        crc.process_bytes(str.c_str(), str.size());
+        return crc.checksum();
     }
 };
+
+using ProcessorType = std::function<void(const FrameType &)>;
 
 using std::chrono::steady_clock;
 

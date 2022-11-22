@@ -5,10 +5,8 @@
 #include "../include/writer.h"
 #include <JuceHeader.h>
 #include <fstream>
-#include <map>
 #include <queue>
 #include <thread>
-#include <vector>
 
 #pragma once
 
@@ -22,17 +20,17 @@ public:
         titleLabel.setCentrePosition(300, 40);
         addAndMakeVisible(titleLabel);
 
-        TestButton.setButtonText("Test");
-        TestButton.setSize(80, 40);
-        TestButton.setCentrePosition(150, 140);
-        TestButton.onClick = [=]() {
+        Part1CK.setButtonText("Part1CK UDP 2->3");
+        Part1CK.setSize(80, 40);
+        Part1CK.setCentrePosition(150, 140);
+        Part1CK.onClick = [this]() {
             std::string here = "This is a sentence, This is a sentence!";
             Config config = globalConfig.get(Config::NODE3, Config::UDP);
             for (int i = 0; i < 10; ++i) { UDP_socket->send(here, config.ip, config.port); }
         };
-        addAndMakeVisible(TestButton);
+        addAndMakeVisible(Part1CK);
 
-        Node2Button.setButtonText("Node2");
+        Node2Button.setButtonText("---");
         Node2Button.setSize(80, 40);
         Node2Button.setCentrePosition(450, 140);
         Node2Button.onClick = nullptr;
@@ -51,13 +49,24 @@ public:
 
 private:
     void initThreads() {
-        reader = new Reader(&directInput, &directInputLock, &binaryInput, &binaryInputLock);
+        auto processFunc = [this](const FrameType &frame) { // NAT
+            fprintf(stderr, "\t\tNAT\n");
+            if (frame.type == Config::UDP) UDP_socket->send(frame.body, IPType2Str(frame.ip), frame.port);
+            else
+                ;
+        };
+        reader = new Reader(&directInput, &directInputLock, processFunc);
         reader->startThread();
-        writer = new Writer(&directOutput, &directOutputLock, &quiet);
+        writer = new Writer(&directOutput, &directOutputLock);
     }
 
     void initSockets() {
-        UDP_socket = new UDP(globalConfig.get(Config::NODE3, Config::UDP).port, nullptr, nullptr);
+        auto processFunc = [this](const FrameType &frame) { // NAT
+            if (frame.type == Config::UDP) writer->send(frame);
+            else
+                ;
+        };
+        UDP_socket = new UDP(globalConfig.get(Config::NODE3, Config::UDP).port, processFunc);
         UDP_socket->startThread();
     }
 
@@ -66,7 +75,6 @@ private:
         AudioDeviceManager::AudioDeviceSetup currentAudioSetup;
         deviceManager.getAudioDeviceSetup(currentAudioSetup);
         currentAudioSetup.bufferSize = 144;// 144 160 192
-        // String ret = deviceManager.setAudioDeviceSetup(currentAudioSetup, true);
         fprintf(stderr, "Main Thread Start\n");
     }
 
@@ -87,37 +95,13 @@ private:
                 directInputLock.enter();
                 for (int i = 0; i < bufferSize; ++i) { directInput.push(data[i]); }
                 directInputLock.exit();
-                // listen if the channel is quiet
-                bool nowQuiet = true;
-                for (int i = bufferSize - LENGTH_PREAMBLE * LENGTH_OF_ONE_BIT; i < bufferSize; ++i)
-                    if (fabs(data[i]) > NOISY_THRESHOLD) {
-                        nowQuiet = false;
-                        //                        fprintf(stderr, "\t\tNoisy Now!!!!\n");
-                        //                        std::ofstream logOut("log.out", std::ios::app);
-                        //                        for (int j = 0; j < bufferSize; ++j)logOut << (int) (data[j] * 100) << ' ';
-                        //                        logOut << "\n";
-                        //                        logOut.close();
-                        break;
-                    }
-                quiet.set(nowQuiet);
                 buffer->clear();
                 // Write if PHY layer wants
                 float *writePosition = buffer->getWritePointer(channel);
                 for (int i = 0; i < bufferSize; ++i) writePosition[i] = 0.0f;
-                //                constexpr int W = 2;
-                //                constexpr int bits[16] = {1,1,1,1,0,1,1,1,
-                //                                          1,1,1,1,0,1,1,1};
-                //                for (int i = 0; i < 16; ++i) {
-                //                    writePosition[4 * i + 0] = writePosition[4 * i + 1] = bits[i] ? 1.0f : -1.0f;
-                //                    writePosition[4 * i + 2] = writePosition[4 * i + 3] = bits[i] ? -1.0f : 1.0f;
-                //                }
                 directOutputLock.enter();
                 for (int i = 0; i < bufferSize; ++i) {
-                    if (directOutput.empty()) {
-                        directOutputLock.exit();
-                        directOutputLock.enter();
-                        continue;
-                    }
+                    if (directOutput.empty()) continue;
                     writePosition[i] = directOutput.front();
                     directOutput.pop();
                 }
@@ -134,22 +118,19 @@ private:
     void destroySockets() { delete UDP_socket; }
 
 private:
-    // Process Input
+    // Handler
     Reader *reader{nullptr};
+    Writer *writer{nullptr};
+
+    // Physical Layer
     std::queue<float> directInput;
     CriticalSection directInputLock;
-    std::queue<FrameType> binaryInput;
-    CriticalSection binaryInputLock;
-
-    // Process Output
-    Writer *writer{nullptr};
     std::queue<float> directOutput;
     CriticalSection directOutputLock;
-    Atomic<bool> quiet = false;
 
     // GUI related
     juce::Label titleLabel;
-    juce::TextButton TestButton;
+    juce::TextButton Part1CK;
     juce::TextButton Node2Button;
 
     // Ethernet related

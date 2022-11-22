@@ -4,10 +4,8 @@
 #include "../include/writer.h"
 #include <JuceHeader.h>
 #include <fstream>
-#include <map>
 #include <queue>
 #include <thread>
-#include <vector>
 
 #pragma once
 
@@ -41,14 +39,14 @@ public:
                     body.push_back(c);
                     continue;
                 }
-                FrameType frame{FrameType::udp, Str2IPType(conf.ip), (PORTType) conf.port, body};
+                FrameType frame{Config::UDP, Str2IPType(conf.ip), (PORTType) conf.port, body};
                 writer->send(frame);
                 body.clear();
             }
         };
         addAndMakeVisible(Part2CK1);
 
-        Node2Button.setButtonText("Node2");
+        Node2Button.setButtonText("---");
         Node2Button.setSize(80, 40);
         Node2Button.setCentrePosition(450, 140);
         Node2Button.onClick = [] {};
@@ -62,7 +60,12 @@ public:
 
 private:
     void initThreads() {
-        reader = new Reader(&directInput, &directInputLock, &binaryInput, &binaryInputLock);
+        auto processFunc = [this](const FrameType &frame) {
+            if (frame.type == Config::UDP) fprintf(stderr, "SUCCEED! %s:%u %s\n", IPType2Str(frame.ip).c_str(), frame.port, frame.body.c_str());
+            else
+                ;
+        };
+        reader = new Reader(&directInput, &directInputLock, processFunc);
         reader->startThread();
         writer = new Writer(&directOutput, &directOutputLock);
     }
@@ -113,11 +116,9 @@ private:
     }
 
 private:
-    // Process Input
+    // Handler
     Reader *reader{nullptr};
     Writer *writer{nullptr};
-    std::queue<FrameType> binaryInput;
-    CriticalSection binaryInputLock;
 
     // Physical Layer
     std::queue<float> directInput;
