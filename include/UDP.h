@@ -7,8 +7,6 @@
 #include <ostream>
 #include <queue>
 
-// TODO: Node 2 and Node 3 should both receive and send
-
 class UDP : public Thread {
 public:
     UDP() = delete;
@@ -42,12 +40,14 @@ public:
             char buffer[41];
             juce::String sender_ip;
             int sender_port;
-            int len = UDP_Socket->read(buffer, 41, true, sender_ip, sender_port);
+            UDP_Socket->waitUntilReady(true, 10000);
+            int len = UDP_Socket->read(buffer, 41, false, sender_ip, sender_port);
             std::cout << "Pack from " << sender_ip << ":" << sender_port << " with length " << len << "(bytes) and content: " << buffer << std::endl;
         }
     }
 
     void send(const std::string& buffer, const std::string &ip, int target_port) {
+        UDP_Socket->waitUntilReady(false, 10000);
         UDP_Socket->write(ip, target_port, buffer.c_str(), static_cast<int>(buffer.size()));
     }
 
