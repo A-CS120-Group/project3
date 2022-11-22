@@ -11,8 +11,6 @@
 #include <vector>
 
 #pragma once
-#define PORT 1234
-#define IP "192.168.1.100"
 
 class MainContentComponent : public juce::AudioAppComponent {
 public:
@@ -133,9 +131,8 @@ public:
         TestButton.setCentrePosition(150, 140);
         TestButton.onClick = [=]() {
             std::string here = "This is a sentence, This is a sentence!";
-            for (int i = 0; i < 10; ++i) {
-                UDP_sock->send(here, IP, PORT);
-            }
+            Config config = globalConfig.get(Config::NODE3, Config::UDP);
+            for (int i = 0; i < 10; ++i) { UDP_socket->send(here, config.ip, config.port); }
         };
         addAndMakeVisible(TestButton);
 
@@ -164,8 +161,8 @@ private:
     }
 
     void initSockets() {
-        UDP_sock = new UDP(PORT, nullptr, nullptr);
-        UDP_sock->startThread();
+        UDP_socket = new UDP(globalConfig.get(Config::NODE3, Config::UDP).port, nullptr, nullptr);
+        UDP_socket->startThread();
     }
 
     void prepareToPlay([[maybe_unused]] int samplesPerBlockExpected, [[maybe_unused]] double sampleRate) override {
@@ -238,7 +235,7 @@ private:
         delete writer;
     }
 
-    void destroySockets() { delete UDP_sock; }
+    void destroySockets() { delete UDP_socket; }
 
 private:
     // Process Input
@@ -260,7 +257,8 @@ private:
     juce::TextButton Node2Button;
 
     // Ethernet related
-    UDP *UDP_sock{nullptr};
+    GlobalConfig globalConfig{};
+    UDP *UDP_socket{nullptr};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainContentComponent)
 };

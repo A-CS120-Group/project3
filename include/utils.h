@@ -6,6 +6,9 @@
 #include <iostream>
 #include <vector>
 
+#define NOT_REACHED                                                                                                                                                                \
+    do { exit(123); } while (false);
+
 using LENType = unsigned char;
 using SEQType = char;
 
@@ -49,10 +52,7 @@ public:
 
     FrameType() = default;
 
-    FrameType(LENType numLen, SEQType numSeq, const char *bodySrc) :
-            len(numLen), seq(numSeq) {
-        memcpy(body, bodySrc, len);
-    }
+    FrameType(LENType numLen, SEQType numSeq, const char *bodySrc) : len(numLen), seq(numSeq) { memcpy(body, bodySrc, len); }
 
     [[nodiscard]] std::string wholeString() const {
         std::string ret = inString(len) + inString(seq) + std::string(body, len);
@@ -86,5 +86,3 @@ struct FrameWaitingInfo {
     MyTimer timer;
     int resendTimes = 20;
 };
-
-std::string readConfig(int lineNum);

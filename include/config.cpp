@@ -1,21 +1,49 @@
 #include "config.h"
-#include <fstream>
-#include <thread>
-#include <iostream>
-
 
 using namespace std::chrono_literals;
 
-Config::Config() {
+GlobalConfig::GlobalConfig() {
     std::ifstream configFile("./config.txt", std::ios::in);
     while (!configFile.is_open()) {
         fprintf(stderr, "Failed to open config.txt! Retry after 1s.\n");
         std::this_thread::sleep_for(1000ms);
     }
     while (!configFile.eof()) {
-        std::string thisLine;
-        configFile >> thisLine;
-        std::cout << thisLine << std::endl;
-        std::cout << "-------------" << std::endl;
+        std::string ip, node, type;
+        int port;
+        for (int i = 0; i < 4; ++i) {
+            configFile >> ip >> port >> node >> type;
+            Config config;
+            config.ip = ip;
+            config.port = port;
+            if (node == "NODE1") {
+                config.node = Config::Node::NODE1;
+            } else if (node == "NODE2") {
+                config.node = Config::Node::NODE2;
+            } else if (node == "NODE3") {
+                config.node = Config::Node::NODE3;
+            } else {
+                NOT_REACHED
+            }
+            if (type == "UDP") {
+                config.type = Config::Type::UDP;
+            } else if (type == "TCP") {
+                config.type = Config::Type::TCP;
+            } else if (type == "ICMP_REQUEST") {
+                config.type = Config::Type::ICMP_REQUEST;
+            } else if (type == "ICMP_REPLY") {
+                config.type = Config::Type::ICMP_REPLY;
+            } else {
+                NOT_REACHED
+            }
+            _config.push_back(config);
+        }
     }
+}
+
+Config GlobalConfig::get(Config::Node node, Config::Type type) {
+    for (auto _i: _config) {
+        if (_i.node == node && _i.type == type) { return _i; }
+    }
+    NOT_REACHED
 }

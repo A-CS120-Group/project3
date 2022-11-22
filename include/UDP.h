@@ -15,8 +15,7 @@ public:
 
     UDP(const UDP &&) = delete;
 
-    explicit UDP(int listen_port, std::queue<FrameType> *bufferOut, CriticalSection *lockOutput)
-        : Thread("UDP"), output(bufferOut), protectOutput(lockOutput), port(listen_port) {
+    explicit UDP(int listen_port, std::queue<FrameType> *bufferOut, CriticalSection *lockOutput) : Thread("UDP"), output(bufferOut), protectOutput(lockOutput), port(listen_port) {
         UDP_Socket = new juce::DatagramSocket(false);
         if (!UDP_Socket->bindToPort(listen_port)) {
             std::cerr << "Port " << listen_port << " in use!" << std::endl;
@@ -37,16 +36,18 @@ public:
         //        assert(output != nullptr);
         //        assert(protectOutput != nullptr);
         while (!threadShouldExit()) {
-            char buffer[41];
+            char buffer[50];
             juce::String sender_ip;
             int sender_port;
             UDP_Socket->waitUntilReady(true, 10000);
             int len = UDP_Socket->read(buffer, 41, false, sender_ip, sender_port);
+            if (len == 0) continue;
+            buffer[len] = 0;
             std::cout << "Pack from " << sender_ip << ":" << sender_port << " with length " << len << "(bytes) and content: " << buffer << std::endl;
         }
     }
 
-    void send(const std::string& buffer, const std::string &ip, int target_port) {
+    void send(const std::string &buffer, const std::string &ip, int target_port) {
         UDP_Socket->waitUntilReady(false, 10000);
         UDP_Socket->write(ip, target_port, buffer.c_str(), static_cast<int>(buffer.size()));
     }

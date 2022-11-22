@@ -1,11 +1,10 @@
 #include "../include/UDP.h"
+#include "../include/config.h"
 #include "../include/utils.h"
 #include <JuceHeader.h>
 #include <thread>
 
 #pragma once
-#define PORT 1234
-#define IP "192.168.1.101"
 
 class MainContentComponent : public Component {
 public:
@@ -22,8 +21,8 @@ public:
         TestButton.setCentrePosition(150, 140);
         TestButton.onClick = [=]() {
             char here[40] = "This is a sentence, This is a sentence!";
-            for (int i = 0; i < 10; ++i) { UDP_socket->send(here, IP, PORT);
-            }
+            Config config = globalConfig.get(Config::NODE2, Config::UDP);
+            for (int i = 0; i < 10; ++i) { UDP_socket->send(here, config.ip, config.port); }
         };
         addAndMakeVisible(TestButton);
 
@@ -38,7 +37,10 @@ public:
         initSockets();
     }
 
-    void initSockets() { UDP_socket = new UDP(PORT, nullptr, nullptr); }
+    void initSockets() {
+        UDP_socket = new UDP(globalConfig.get(Config::NODE3, Config::UDP).port, nullptr, nullptr);
+        UDP_socket->startThread();
+    }
 
     void destroySockets() { delete UDP_socket; }
 
@@ -51,6 +53,7 @@ private:
     juce::TextButton Node2Button;
 
     // Ethernet related
+    GlobalConfig globalConfig{};
     UDP *UDP_socket{nullptr};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainContentComponent)
