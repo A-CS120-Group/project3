@@ -67,9 +67,6 @@ public:
                 protectInput->exit();
                 continue;
             }
-            if (sync.front() > NOISY_THRESHOLD) {
-                std::cout << "";
-            }
             sync.pop_front();
             sync.push_back(input->front());
             input->pop();
@@ -78,14 +75,10 @@ public:
             for (unsigned i = 0; isPreamble && i < 8 * LENGTH_PREAMBLE; ++i) {
                 isPreamble = (preamble[i / 8] >> (i % 8) & 1) ==
                              judgeBit(sync[i * LENGTH_OF_ONE_BIT], sync[i * LENGTH_OF_ONE_BIT + 2]);
-                if (i > 10) {
-                    std::cout << "";
-                }
             }
             if (isPreamble)
                 return;
         }
-        fprintf(stderr, "exit\n");
     }
 
     void run() override {
@@ -97,28 +90,29 @@ public:
             // wait for PREAMBLE
             waitForPreamble();
             FrameType frame;
-            // read LEN, SEQ
+            // read LEN, TYPE, IP, PORT
             readObject(frame.len);
-            readObject(frame.seq);
+            readObject(frame.type);
+            readObject(frame.ip);
+            readObject(frame.port);
             if (frame.len > MAX_LENGTH_BODY) {
                 // Too long! There must be some errors.
-                fprintf(stderr, "\tDiscarded due to wrong length. len = %u, seq = %d\n", frame.len, frame.seq);
+                fprintf(stderr, "\tDiscarded due to wrong length. len = %u\n", frame.len);
                 continue;
             }
             // read BODY
-            for (int i = 0; i < frame.len; ++i) { frame.body[i] = readByte(); }
+            for (int i = 0; i < frame.len; ++i) { frame.body.push_back(readByte()); }
             // read CRC
             unsigned int crcRead;
             readObject(crcRead);
             if (crcRead != frame.crc()) {
-                fprintf(stderr, "\tDiscarded due to failing CRC check. len = %u, seq = %d\n", frame.len,
-                        frame.seq);
+                fprintf(stderr, "\tDiscarded due to failing CRC check. len = %u\n", frame.len);
                 continue;
             }
             protectOutput->enter();
             output->push(frame);
             protectOutput->exit();
-            fprintf(stderr, "\tSUCCEED! len = %u, seq = %d\n", frame.len, frame.seq);
+            fprintf(stderr, "\tSUCCEED! %s:%u %s\n", IPType2Str(frame.ip).c_str(), frame.port, frame.body.c_str());
         }
     }
 

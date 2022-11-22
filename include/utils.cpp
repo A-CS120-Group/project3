@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <JuceHeader.h>
 #include <cstdio>
 #include <fstream>
 
@@ -14,4 +15,16 @@ int judgeBit(float signal1, float signal2) {
         return 0;
     else
         return -1;
+}
+
+IPType Str2IPType(const std::string &ip) {
+    juce::IPAddress tmp(ip);
+    IPType ret = 0;
+    for (int i = 0; i < 4; ++i) ret = ret << 8 | tmp.address[i];
+    return ret;
+}
+
+std::string IPType2Str(IPType ip) {
+    juce::IPAddress tmp(ip);
+    return tmp.toString().toStdString();
 }
