@@ -1,0 +1,30 @@
+This file is in LF format,
+Excluding "\n":
+This line has 40 characters, 40------001
+This line has 40 characters, 40------002
+This line has 40 characters, 40------003
+This line has 40 characters, 40------004
+This line has 40 characters, 40------005
+This line has 40 characters, 40------006
+This line has 40 characters, 40------007
+This line has 40 characters, 40------008
+This line has 40 characters, 40------009
+This line has 40 characters, 40------010
+This line has 40 characters, 40------011
+This line has 40 characters, 40------012
+I don't have 40 characters.
+This line has 40 characters, 40------013
+This line has 40 characters, 40------014
+This line has 40 characters, 40------015
+This line has 40 characters, 40------016
+This line has 40 characters, 40------017
+This line has 40 characters, 40------018
+This line has 40 characters, 40------019
+This line has 40 characters, 40------020
+This line has 40 characters, 40------021
+This line has 40 characters, 40------022
+Me neither.
+This line has 40 characters, 40------023
+This line has 40 characters, 40------024
+This line has 40 characters, 40------025
+This line has 40 characters, 40------026
