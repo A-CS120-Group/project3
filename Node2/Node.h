@@ -66,7 +66,7 @@ private:
             else
                 ;
         };
-        UDP_socket = new UDP(globalConfig.get(Config::NODE3, Config::UDP).port, processFunc);
+        UDP_socket = new UDP(globalConfig.get(Config::NODE1, Config::UDP).port, processFunc);
         UDP_socket->startThread();
     }
 
