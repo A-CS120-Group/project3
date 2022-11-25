@@ -15,18 +15,13 @@ public:
 
     Writer(const Writer &&) = delete;
 
-    explicit Writer(std::queue<float> *bufferOut, CriticalSection *lockOutput, Atomic<bool> *quietPtr) :
-            output(bufferOut), protectOutput(lockOutput), quiet(quietPtr) {}
+    explicit Writer(std::queue<float> *bufferOut, CriticalSection *lockOutput) :
+            output(bufferOut), protectOutput(lockOutput) {}
 
     void send(const FrameType &frame) {
-        // listen before transmit
-        MyTimer testNoisyTime;
-        while (!quiet->get());
-        if (testNoisyTime.duration() > 1e-3)
-            fprintf(stderr, "Writer.send defer %lfs because of noisy\n", testNoisyTime.duration());
         // transmit
         protectOutput->enter();
-        std::string str = std::string(preamble, LENGTH_PREAMBLE) + frame.wholeString() + inString(frame.crc());
+        std::string str = preamble + frame.wholeString() + inString(frame.crc());
         for (auto byte: str)
             for (int bitPos = 0; bitPos < 8; ++bitPos) {
                 if (byte >> bitPos & 1) {
@@ -42,17 +37,17 @@ public:
                 }
             }
         // wait until the transmission finished
-//        while (!output->empty()) {
-//            protectOutput->exit();
-//            protectOutput->enter();
-//        }
+        while (!output->empty()) {
+            protectOutput->exit();
+            protectOutput->enter();
+        }
         protectOutput->exit();
+        fprintf(stderr, "\tFrame sent! %s:%u %s\n", IPType2Str(frame.ip).c_str(), frame.port, frame.body.c_str());
     }
 
 private:
     std::queue<float> *output{nullptr};
     CriticalSection *protectOutput;
-    Atomic<bool> *quiet;
 };
 
 #endif//WRITER_H

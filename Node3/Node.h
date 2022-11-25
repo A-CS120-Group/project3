@@ -16,17 +16,32 @@ public:
         titleLabel.setCentrePosition(300, 40);
         addAndMakeVisible(titleLabel);
 
-        TestButton.setButtonText("Send");
-        TestButton.setSize(80, 40);
-        TestButton.setCentrePosition(150, 140);
-        TestButton.onClick = [=]() {
-            char here[40] = "This is a sentence, This is a sentence!";
-            Config config = globalConfig.get(Config::NODE2, Config::UDP);
-            for (int i = 0; i < 10; ++i) { UDP_socket->send(here, config.ip, config.port); }
+        Part2CK2.setButtonText("Part2CK2 UDP 3->1");
+        Part2CK2.setSize(80, 40);
+        Part2CK2.setCentrePosition(150, 140);
+        Part2CK2.onClick = [this]() {
+            // Transmission Initialization
+            std::ifstream fIn("INPUT.txt");
+            if (fIn.is_open()) {
+                fprintf(stderr, "successfully open INPUT.txt!\n");
+            } else {
+                fprintf(stderr, "failed to open INPUT.txt!\n");
+                return;
+            }
+            auto conf = GlobalConfig().get(Config::NODE1, Config::UDP);
+            std::string body;
+            for (char c; fIn.get(c);) {
+                if (c != '\n') {
+                    body.push_back(c);
+                    continue;
+                }
+                UDP_socket->send(body, conf.ip, conf.port);
+                body.clear();
+            }
         };
-        addAndMakeVisible(TestButton);
+        addAndMakeVisible(Part2CK2);
 
-        Node2Button.setButtonText("Node2");
+        Node2Button.setButtonText("---");
         Node2Button.setSize(80, 40);
         Node2Button.setCentrePosition(450, 140);
         Node2Button.onClick = nullptr;
@@ -38,7 +53,12 @@ public:
     }
 
     void initSockets() {
-        UDP_socket = new UDP(globalConfig.get(Config::NODE3, Config::UDP).port, nullptr, nullptr);
+        auto processFunc = [this](const FrameType &frame) {// NAT
+            if (frame.type == Config::UDP) fprintf(stderr, "SUCCEED! %s:%u %s\n", IPType2Str(frame.ip).c_str(), frame.port, frame.body.c_str());
+            else
+                ;
+        };
+        UDP_socket = new UDP(globalConfig.get(Config::NODE3, Config::UDP).port, processFunc);
         UDP_socket->startThread();
     }
 
@@ -49,7 +69,7 @@ public:
 private:
     // GUI related
     juce::Label titleLabel;
-    juce::TextButton TestButton;
+    juce::TextButton Part2CK2;
     juce::TextButton Node2Button;
 
     // Ethernet related

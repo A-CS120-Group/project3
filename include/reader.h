@@ -6,8 +6,19 @@
 #include <cassert>
 #include <ostream>
 #include <queue>
+#include <utility>
+
+constexpr float PREAMBLE_THRESHOLD = 0.3f;
 
 class Reader : public Thread {
+    static int judgeBit(float signal1, float signal2) {
+        if (signal1 - signal2 > PREAMBLE_THRESHOLD) return 1;
+        else if (signal2 - signal1 > PREAMBLE_THRESHOLD)
+            return 0;
+        else
+            return -1;
+    }
+
 public:
     Reader() = delete;
 
@@ -15,10 +26,8 @@ public:
 
     Reader(const Reader &&) = delete;
 
-    explicit Reader(std::queue<float> *bufferIn, CriticalSection *lockInput, std::queue<FrameType> *bufferOut,
-                    CriticalSection *lockOutput)
-            : Thread("Reader"), input(bufferIn), output(bufferOut), protectInput(lockInput),
-              protectOutput(lockOutput) {
+    explicit Reader(std::queue<float> *bufferIn, CriticalSection *lockInput, ProcessorType processFunc)
+        : Thread("Reader"), input(bufferIn), protectInput(lockInput), process(std::move(processFunc)) {
         fprintf(stderr, "    Reader Thread Start\n");
     }
 
@@ -39,9 +48,8 @@ public:
             protectInput->exit();
             if (++bufferPos == LENGTH_OF_ONE_BIT) {
                 int bit = judgeBit(buffer[0], buffer[2]);
-                if (bit == -1) { // shift by one sample
-                    for (int i = 1; i < LENGTH_OF_ONE_BIT; ++i)
-                        buffer[i - 1] = buffer[i];
+                if (bit == -1) {// shift by one sample
+                    for (int i = 1; i < LENGTH_OF_ONE_BIT; ++i) buffer[i - 1] = buffer[i];
                     --bufferPos;
                     continue;
                 }
@@ -55,8 +63,7 @@ public:
 
     template<class T>
     void readObject(T &object) {
-        for (size_t i = 0; i < sizeof(object); ++i)
-            ((char *) &object)[i] = readByte();
+        for (size_t i = 0; i < sizeof(object); ++i) ((char *) &object)[i] = readByte();
     }
 
     void waitForPreamble() {
@@ -67,66 +74,53 @@ public:
                 protectInput->exit();
                 continue;
             }
-            if (sync.front() > NOISY_THRESHOLD) {
-                std::cout << "";
-            }
             sync.pop_front();
             sync.push_back(input->front());
             input->pop();
             protectInput->exit();
             bool isPreamble = true;
             for (unsigned i = 0; isPreamble && i < 8 * LENGTH_PREAMBLE; ++i) {
-                isPreamble = (preamble[i / 8] >> (i % 8) & 1) ==
-                             judgeBit(sync[i * LENGTH_OF_ONE_BIT], sync[i * LENGTH_OF_ONE_BIT + 2]);
-                if (i > 10) {
-                    std::cout << "";
-                }
+                isPreamble = (preamble[i / 8] >> (i % 8) & 1) == judgeBit(sync[i * LENGTH_OF_ONE_BIT], sync[i * LENGTH_OF_ONE_BIT + 2]);
             }
-            if (isPreamble)
-                return;
+            if (isPreamble) return;
         }
-        fprintf(stderr, "exit\n");
     }
 
     void run() override {
         assert(input != nullptr);
-        assert(output != nullptr);
         assert(protectInput != nullptr);
-        assert(protectOutput != nullptr);
         while (!threadShouldExit()) {
             // wait for PREAMBLE
             waitForPreamble();
             FrameType frame;
-            // read LEN, SEQ
+            // read LEN, TYPE, IP, PORT
             readObject(frame.len);
-            readObject(frame.seq);
+            readObject(frame.type);
+            readObject(frame.ip);
+            readObject(frame.port);
             if (frame.len > MAX_LENGTH_BODY) {
                 // Too long! There must be some errors.
-                fprintf(stderr, "\tDiscarded due to wrong length. len = %u, seq = %d\n", frame.len, frame.seq);
+                fprintf(stderr, "\tDiscarded due to wrong length. len = %u\n", frame.len);
                 continue;
             }
             // read BODY
-            for (int i = 0; i < frame.len; ++i) { frame.body[i] = readByte(); }
+            for (int i = 0; i < frame.len; ++i) { frame.body.push_back(readByte()); }
             // read CRC
             unsigned int crcRead;
             readObject(crcRead);
             if (crcRead != frame.crc()) {
-                fprintf(stderr, "\tDiscarded due to failing CRC check. len = %u, seq = %d\n", frame.len,
-                        frame.seq);
+                fprintf(stderr, "\tDiscarded due to failing CRC check. len = %u\n", frame.len);
                 continue;
             }
-            protectOutput->enter();
-            output->push(frame);
-            protectOutput->exit();
-            fprintf(stderr, "\tSUCCEED! len = %u, seq = %d\n", frame.len, frame.seq);
+            fprintf(stderr, "\tReceive a frame! len = %u\n", frame.len);
+            process(frame);
         }
     }
 
 private:
-    std::queue<float> *input{nullptr};
-    std::queue<FrameType> *output{nullptr};
+    std::queue<float> *input;
     CriticalSection *protectInput;
-    CriticalSection *protectOutput;
+    ProcessorType process;
 };
 
 #endif//READER_H

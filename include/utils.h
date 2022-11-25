@@ -3,32 +3,31 @@
 #include <algorithm>
 #include <boost/crc.hpp>
 #include <chrono>
-#include <iostream>
-#include <vector>
+#include <functional>
 
 #define NOT_REACHED                                                                                                                                                                \
     do { exit(123); } while (false);
 
 using LENType = unsigned char;
-using SEQType = char;
+using TYPEType = unsigned char;
+using IPType = unsigned int;
+using PORTType = unsigned short;
 
-#define LENGTH_OF_ONE_BIT 4
-#define MTU 60
-#define LENGTH_PREAMBLE 3
-#define LENGTH_LEN sizeof(LENType)
-#define LENGTH_SEQ sizeof(SEQType)
-#define LENGTH_CRC sizeof(unsigned int)
-#define MAX_LENGTH_BODY (MTU - LENGTH_PREAMBLE - LENGTH_SEQ - LENGTH_LEN - LENGTH_CRC)
+constexpr int LENGTH_OF_ONE_BIT = 4;
+constexpr int MTU = 60;
+constexpr int LENGTH_PREAMBLE = 3;
+constexpr int LENGTH_LEN = sizeof(LENType);
+constexpr int LENGTH_TYPE = sizeof(TYPEType);
+constexpr int LENGTH_IP = sizeof(IPType);
+constexpr int LENGTH_PORT = sizeof(PORTType);
+constexpr int LENGTH_CRC = 4;
+constexpr int MAX_LENGTH_BODY = MTU - LENGTH_PREAMBLE - LENGTH_LEN - LENGTH_TYPE - LENGTH_IP - LENGTH_PORT - LENGTH_CRC;
 
-#define SLIDING_WINDOW_SIZE 3
-#define SLIDING_WINDOW_TIMEOUT_NODE1 0.5
-#define SLIDING_WINDOW_TIMEOUT_NODE2 0.4
-#define PREAMBLE_THRESHOLD 0.3f
-#define NOISY_THRESHOLD 0.01f
+const std::string preamble{0x55, 0x55, 0x54};
 
-unsigned int crc32(const char *src, size_t srcSize);
+IPType Str2IPType(const std::string &ip);
 
-int judgeBit(float signal1, float signal2);
+std::string IPType2Str(IPType ip);
 
 template<class T>
 [[nodiscard]] std::string inString(T object) {
@@ -37,33 +36,36 @@ template<class T>
 
 /* Structure of a frame
  * PREAMBLE
- * LEN      the length of BODY; Len = 0: ACK
- * SEQ      +x: Node1 frame, -x: Node2 frame;
+ * LEN      the length of BODY;
+ * TYP      type of protocol;
+ * IP
+ * PORT
  * BODY
  * CRC
  */
-constexpr char preamble[LENGTH_PREAMBLE]{0x55, 0x55, 0x54};
-
 class FrameType {
 public:
     LENType len = 0;
-    SEQType seq = 0;
-    char body[MAX_LENGTH_BODY]{};
+    TYPEType type = 0;
+    IPType ip = 0;
+    PORTType port = 0;
+    std::string body;
 
     FrameType() = default;
 
-    FrameType(LENType numLen, SEQType numSeq, const char *bodySrc) : len(numLen), seq(numSeq) { memcpy(body, bodySrc, len); }
+    FrameType(TYPEType nType, IPType nIp, PORTType nPort, std::string nBody) : len((LENType) nBody.size()), type(nType), ip(nIp), port(nPort), body(std::move(nBody)) {}
 
-    [[nodiscard]] std::string wholeString() const {
-        std::string ret = inString(len) + inString(seq) + std::string(body, len);
-        return ret;
-    }
+    [[nodiscard]] std::string wholeString() const { return inString(len) + inString(type) + inString(ip) + inString(port) + body; }
 
     [[nodiscard]] unsigned int crc() const {
         auto str = wholeString();
-        return crc32(str.c_str(), str.size());
+        boost::crc_32_type crc;
+        crc.process_bytes(str.c_str(), str.size());
+        return crc.checksum();
     }
 };
+
+using ProcessorType = std::function<void(const FrameType &)>;
 
 using std::chrono::steady_clock;
 
@@ -79,10 +81,4 @@ public:
         auto now = steady_clock::now();
         return std::chrono::duration<double>(now - start).count();
     }
-};
-
-struct FrameWaitingInfo {
-    bool receiveACK = false;
-    MyTimer timer;
-    int resendTimes = 20;
 };
