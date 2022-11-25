@@ -31,11 +31,13 @@ public:
             std::ifstream pipe("./pipe");
             std::string line1, line2, line3;
             pipe >> line1 >> line2 >> line3;
-            if (line1.empty() | line2.empty() | line3.empty()) continue;
+            if (line1.empty() || line2.empty() || line3.empty()) continue;
             // assert line1, line2 are ip address
             if (line2 != self_ip) continue;
             // Discard other packs
             std::cerr << line1 << " " << line2 << " " << line3 << std::endl;
+            // Line1 is src_ip, Line2 is dst_ip, line3 is IP_payload (not ICMP)
+            // TODO: Throw into Athernet
 //            FrameType frame{Config::ICMP, line2, std::string(buffer, len)};
 //            process(frame);
         }

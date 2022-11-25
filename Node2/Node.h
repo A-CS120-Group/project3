@@ -71,6 +71,9 @@ private:
         };
         UDP_socket = new UDP(globalConfig.get(Config::NODE1, Config::UDP).port, processFunc);
         UDP_socket->startThread();
+        // IP address is the same
+        icmp_receiver = new ICMP(globalConfig.get(Config::NODE2, Config::UDP).ip, nullptr);
+        icmp_receiver->startThread();
     }
 
     void prepareToPlay([[maybe_unused]] int samplesPerBlockExpected, [[maybe_unused]] double sampleRate) override {
@@ -139,6 +142,7 @@ private:
     // Ethernet related
     GlobalConfig globalConfig{};
     UDP *UDP_socket{nullptr};
+    ICMP *icmp_receiver{nullptr};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainContentComponent)
 };
