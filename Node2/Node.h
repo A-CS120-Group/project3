@@ -3,6 +3,7 @@
 #include "../include/reader.h"
 #include "../include/utils.h"
 #include "../include/writer.h"
+#include "../include/ICMP.h"
 #include <JuceHeader.h>
 #include <fstream>
 #include <queue>
@@ -52,6 +53,8 @@ private:
         auto processFunc = [this](const FrameType &frame) { // NAT
             fprintf(stderr, "\t\tNAT\n");
             if (frame.type == Config::UDP) UDP_socket->send(frame.body, IPType2Str(frame.ip), frame.port);
+            else if (frame.type == Config::ICMP_REQUEST) ICMP::send(frame.body, IPType2Str(frame.ip));
+            else if (frame.type == Config::ICMP_REPLY) ; // TODO: tell python to send reply
             else
                 ;
         };
