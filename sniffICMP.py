@@ -6,7 +6,30 @@ from scapy.all import *
 
 # This file is for Node2 only
 
-# TODO: read config file
+
+def calculateChecksum(data):
+    checksum = 0
+    count = (len(data) // 2) * 2
+    i = 0
+
+    while i < count:
+        temp = data[i + 1] * 256 + data[i]
+        checksum = checksum + temp
+        checksum = checksum & 0xffffffff
+        i = i + 2
+
+    if i < len(data):
+        checksum = checksum + data[len(data) - 1]
+        checksum = checksum & 0xffffffff
+
+    # 32-bit to 16-bit
+    checksum = (checksum >> 16) + (checksum & 0xffff)
+    checksum = checksum + (checksum >> 16)
+    checksum = ~checksum
+    checksum = checksum & 0xffff
+
+    checksum = checksum >> 8 | (checksum << 8 & 0xff00)
+    return checksum
 
 FIFO_pipe = "./pipe"
 try:
@@ -36,7 +59,7 @@ while True:
     icmp_raw = bytearray(ip_payload)
     icmp_raw[0:1] = b'\x00'
     icmp_raw[2:4] = b'\x00\x00'
-    checksum = # TODO: here
+    checksum = int(calculateChecksum(icmp_raw)).to_bytes(length=2, byteorder='big')
     icmp_raw[2:4] = checksum
     ping_reply.sendto(bytes(icmp_raw), (src_ip_addr, 80))
 
