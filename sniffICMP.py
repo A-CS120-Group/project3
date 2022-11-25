@@ -4,6 +4,7 @@ import time
 import os
 from scapy.all import *
 
+
 # This file is for Node2 only
 
 
@@ -31,6 +32,9 @@ def calculateChecksum(data):
     checksum = checksum >> 8 | (checksum << 8 & 0xff00)
     return checksum
 
+
+currentIP = "192.168.1.101"
+
 FIFO_pipe = "./pipe"
 try:
     os.mkfifo(FIFO_pipe)
@@ -50,11 +54,22 @@ while True:
                              for x in bytearray(bytes(pkt[0]['IP'].payload)))
     src_ip_addr = str(pkt[0]['IP'].src)
     dst_ip_addr = str(pkt[0]['IP'].dst)
-    pipe.write(src_ip_addr + " " + dst_ip_addr + " " + ip_payload_str)
-    pipe.write('\n')
+
     print(src_ip_addr)
     print(dst_ip_addr)
     print(ip_payload_str)
+
+    # hello
+    # TODO: if not ping reply and "hello" in payload
+    if "68656c6c6f" not in ip_payload_str:
+        print("Discard!")
+        pipe.close()
+        continue
+
+    pipe.write(src_ip_addr + " " + dst_ip_addr + " " + ip_payload_str)
+    pipe.write('\n')
+
+    # TODO: wait for response from C++
 
     icmp = socket.getprotobyname('icmp')
     ping_reply = socket.socket(socket.AF_INET, socket.SOCK_RAW, icmp)
