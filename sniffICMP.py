@@ -39,20 +39,22 @@ except OSError as oe:
     if oe.errno != errno.EEXIST:
         raise
 
-a = 0
 print("Open")
-# with open(FIFO_pipe, "a") as pipe:
+
 while True:
+    pipe = open(FIFO_pipe, "w")
+    print(1)
     pkt = sniff(filter='icmp', count=1)
     ip_payload = bytes(pkt[0]['IP'].payload)
+    ip_payload_str = ''.join('{:02x}'.format(x)
+                             for x in bytearray(bytes(pkt[0]['IP'].payload)))
     src_ip_addr = str(pkt[0]['IP'].src)
     dst_ip_addr = str(pkt[0]['IP'].dst)
-    # pipe.write(src_ip_addr)
-    # pipe.write(dst_ip_addr)
-    # pipe.write(pkt)
-    print(ip_payload)
+    pipe.write(src_ip_addr + " " + dst_ip_addr + " " + ip_payload_str)
+    pipe.write('\n')
     print(src_ip_addr)
     print(dst_ip_addr)
+    print(ip_payload_str)
 
     icmp = socket.getprotobyname('icmp')
     ping_reply = socket.socket(socket.AF_INET, socket.SOCK_RAW, icmp)
@@ -62,5 +64,7 @@ while True:
     checksum = int(calculateChecksum(icmp_raw)).to_bytes(length=2, byteorder='big')
     icmp_raw[2:4] = checksum
     ping_reply.sendto(bytes(icmp_raw), (src_ip_addr, 80))
+
+    pipe.close()
 
 print("Close")
