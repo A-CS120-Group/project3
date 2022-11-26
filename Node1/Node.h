@@ -67,7 +67,7 @@ public:
             for (pingFrame.seq = 1; pingFrame.seq <= 10; ++pingFrame.seq) {
                 pingTimer.restart();
                 writer->send(pingFrame.toFrameType());
-                while (pingTimer.duration() < 1.0)
+                while (pingTimer.duration() < 10.0)
                     ;
             }
         };

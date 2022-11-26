@@ -31,13 +31,13 @@ public:
         while (!threadShouldExit()) {
             // Read from pipe
             std::ifstream pipe("./py2cpp");
-            std::string src_ip_addr;
+            std::string dst_ip_addr;
             ICMPFrameType frame;
-            pipe >> src_ip_addr >> frame.ip >> frame.type >> frame.identifier >> frame.seq >> frame.payload;
-            if (src_ip_addr.empty()) continue;
-            if (frame.ip != self_ip) continue;
+            pipe >> frame.ip >> dst_ip_addr >> frame.type >> frame.identifier >> frame.seq >> frame.payload;
+            if (frame.ip.empty()) continue;
+            if (dst_ip_addr != self_ip) continue;
             // Discard other packs
-            std::cerr << "receive: " << src_ip_addr << " " << frame.ip << " " << frame.type << " " << frame.identifier << " " << frame.seq << " " << frame.payload << std::endl;
+            std::cerr << "receive: " << frame.ip << " " << dst_ip_addr << " " << frame.type << " " << frame.identifier << " " << frame.seq << " " << frame.payload << std::endl;
             process(frame);
         }
     }

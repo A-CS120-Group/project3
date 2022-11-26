@@ -112,7 +112,7 @@ public:
                 fprintf(stderr, "\tDiscarded due to failing CRC check. len = %u\n", frame.len);
                 continue;
             }
-            fprintf(stderr, "\tReceive a frame! len = %u\n", frame.len);
+            fprintf(stderr, "\tReceive a frame! len = %u, %u %s %u %s\n", frame.len, frame.type, IPType2Str(frame.ip).c_str(), frame.port, frame.body.c_str());
             process(frame);
         }
     }
