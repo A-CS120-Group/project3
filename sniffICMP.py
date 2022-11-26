@@ -41,6 +41,7 @@ while True:
 
     icmp_identifier = ip_payload_str[8:12]
     icmp_seq = ip_payload_str[12:16]
+    icmp_seq = str(int(icmp_seq, 16))
 
     if len(ip_payload_str) == 16:
         print("Discard, I don't like packages with no payload!")
