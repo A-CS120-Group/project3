@@ -20,9 +20,6 @@ while True:
     src_ip_addr = str(pkt[0]['IP'].src)
     dst_ip_addr = str(pkt[0]['IP'].dst)
 
-    print(src_ip_addr)
-    print(dst_ip_addr)
-    print(ip_payload_str)
     # first two hex
     icmp_type = ip_payload_str[0:2]
     if icmp_type == "08":
@@ -50,10 +47,15 @@ while True:
     icmp_payload = ip_payload_str[16:]
 
     # hello
-    if "68656c6c6f" not in icmp_payload:
-        print("Discard due to wrong payload")
-        pipe.close()
-        continue
+    # if "68656c6c6f" not in icmp_payload and icmp_type == "3":
+    #     print("Discard due to wrong payload")
+    #     pipe.close()
+    #     continue
+
+    print(src_ip_addr)
+    print(dst_ip_addr)
+    print(icmp_seq)
+    print(ip_payload_str)
 
     pipe.write(src_ip_addr + " " + dst_ip_addr + " " + icmp_type + " " +
                icmp_identifier + " " + icmp_seq + " " + icmp_payload)

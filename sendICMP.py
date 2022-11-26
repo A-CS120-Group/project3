@@ -60,7 +60,7 @@ while True:
 
     seq = bytearray.fromhex("{:04x}".format(int(seq)))
     icmp_payload = bytearray.fromhex(icmp_payload)
-    identifier = bytearray.fromhex(identifier)
+    identifier = bytearray.fromhex(identifier.rjust(4, '0'))
 
     icmp_request_head = bytearray(b"\x08\x00\x00\x00\x00\x00\x00\x00")
     icmp_reply_head = bytearray(b"\x00\x00\x00\x00\x00\x00\x00\x00")

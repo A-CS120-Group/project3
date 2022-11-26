@@ -37,7 +37,7 @@ public:
             if (src_ip_addr.empty()) continue;
             if (frame.ip != self_ip) continue;
             // Discard other packs
-            std::cerr << "receive: " << src_ip_addr << frame.ip << frame.type << frame.identifier << frame.seq << frame.payload;
+            std::cerr << "receive: " << src_ip_addr << " " << frame.ip << " " << frame.type << " " << frame.identifier << " " << frame.seq << " " << frame.payload << std::endl;
             process(frame);
         }
     }
