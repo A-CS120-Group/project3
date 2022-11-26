@@ -28,23 +28,30 @@ public:
     void run() override {
         while (!threadShouldExit()) {
             // Read from pipe
-            std::ifstream pipe("./pipe");
-            std::string line1, line2, line3;
-            pipe >> line1 >> line2 >> line3;
-            if (line1.empty() || line2.empty() || line3.empty()) continue;
-            // assert line1, line2 are ip address
-            if (line2 != self_ip) continue;
+            std::ifstream pipe("./py2cpp");
+            std::string src_ip_addr, dst_ip_addr, icmp_type, icmp_identifier, icmp_seq, icmp_payload;
+            pipe >> src_ip_addr >> dst_ip_addr >> icmp_type >> icmp_identifier >> icmp_seq >> icmp_payload;
+            if (src_ip_addr.empty()) continue;
+            if (dst_ip_addr != self_ip) continue;
             // Discard other packs
-            std::cerr << line1 << " " << line2 << " " << line3 << std::endl;
-            // Line1 is src_ip, Line2 is dst_ip, line3 is IP_payload (not ICMP)
+            std::cerr << "receive: " << src_ip_addr << dst_ip_addr << icmp_type << icmp_identifier << icmp_seq << icmp_payload;
+            // type = "request"  # or reply
+
             // TODO: Throw into Athernet
-//            FrameType frame{Config::ICMP, line2, std::string(buffer, len)};
-//            process(frame);
+            //            FrameType frame{Config::ICMP, line2, std::string(buffer, len)};
+            //            process(frame);
         }
     }
 
-    static void send(const std::string &payload, const std::string &ip) {
-        icmp_request_send(ip, payload);
+    static void send(const std::string &type, const std::string &ip, const std::string &identifier, int seq, const std::string &icmp_payload) {
+        // Write to pipe
+        std::ofstream pipe("./cpp2py");
+        // mode = "request"  # or reply
+        // dst_ip_addr = "192.168.1.101"
+        // identifier = "6566"
+        // seq = "14"
+        // icmp_payload = "61626364"
+        pipe << type << " " << ip << " " << identifier << " " << seq << icmp_payload << std::endl;
         fprintf(stderr, "\t\tICMP sent\n");
     }
 
