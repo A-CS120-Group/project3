@@ -59,14 +59,15 @@ public:
             }
             pingFrame.type = Config::PING;
             fIn >> pingFrame.ip;
-            pingFrame.identifier = "1";
+            pingFrame.identifier = "abcd";
+            pingFrame.payload.clear();
             char c;
             fIn.get(c);
             while (fIn.get(c) && c != '\n') pingFrame.payload.push_back(c);
             for (pingFrame.seq = 1; pingFrame.seq <= 10; ++pingFrame.seq) {
-                MyTimer timer;
+                pingTimer.restart();
                 writer->send(pingFrame.toFrameType());
-                while (timer.duration() < 1.0)
+                while (pingTimer.duration() < 1.0)
                     ;
             }
         };
@@ -93,9 +94,9 @@ private:
                 // receive PONG
                 ICMPFrameType pongFrame;
                 pongFrame.fromFrameType(frame);
-                if (pingFrame.ip == pongFrame.ip && pingFrame.seq == pongFrame.seq) {
+                if (pingFrame.identifier == pongFrame.identifier && pingFrame.seq == pongFrame.seq) {
                     // PING and PONG match
-                    fprintf(stderr, "receive PONG! %s %s\n", pongFrame.ip.c_str(), frame.body.c_str());
+                    fprintf(stderr, "receive PONG! time=%dms, %s %s\n", (int) (pingTimer.duration() * 1000), pongFrame.ip.c_str(), frame.body.c_str());
                 }
             }
         };
@@ -152,6 +153,7 @@ private:
 private:
     // PING
     ICMPFrameType pingFrame;
+    MyTimer pingTimer;
 
     // AtherNet related
     Reader *reader{nullptr};
