@@ -53,8 +53,7 @@ private:
         auto processFunc = [this](const FrameType &frame) { // NAT
             fprintf(stderr, "\t\tNAT\n");
             if (frame.type == Config::UDP) UDP_socket->send(frame.body, IPType2Str(frame.ip), frame.port);
-            else if (frame.type == Config::ICMP_REQUEST) ICMP::send(frame.body, IPType2Str(frame.ip));
-            else if (frame.type == Config::ICMP_REPLY) ; // TODO: tell python to send reply
+            else if (frame.type == Config::ICMP) ICMP::send; // TODO: here, send something
             else
                 ;
         };

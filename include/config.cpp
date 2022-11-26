@@ -29,10 +29,8 @@ GlobalConfig::GlobalConfig() {
                 config.type = Config::Type::UDP;
             } else if (type == "TCP") {
                 config.type = Config::Type::TCP;
-            } else if (type == "ICMP_REQUEST") {
-                config.type = Config::Type::ICMP_REQUEST;
-            } else if (type == "ICMP_REPLY") {
-                config.type = Config::Type::ICMP_REPLY;
+            } else if (type == "ICMP") {
+                config.type = Config::Type::ICMP;
             } else {
                 NOT_REACHED
             }
