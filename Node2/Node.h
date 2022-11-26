@@ -69,7 +69,7 @@ private:
         auto processUDP = [this](FrameType &frame) {// NAT
             if (frame.type == Config::UDP) writer->send(frame);
         };
-        UDP_socket = new UDP(globalConfig.get(Config::NODE2, Config::UDP).port, processUDP);
+        UDP_socket = new UDP(globalConfig.get(Config::NODE1, Config::UDP).port, processUDP);
         UDP_socket->startThread();
 
         auto processICMP = [this](ICMPFrameType &frame) {// NAT
