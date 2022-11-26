@@ -50,6 +50,8 @@ public:
         // identifier = "6566"
         // seq = "14"
         // icmp_payload = "61626364"
+        std::cout << frame.payload << std::endl;
+        std::cout << frame.type << ' ' << frame.ip << ' ' << frame.identifier << ' ' << frame.seq << ' ' << frame.payload << std::endl;
         pipe << frame.type << ' ' << frame.ip << ' ' << frame.identifier << ' ' << frame.seq << ' ' << frame.payload << std::endl;
         fprintf(stderr, "\t\tICMP sent\n");
     }
