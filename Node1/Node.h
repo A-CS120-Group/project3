@@ -50,10 +50,19 @@ public:
         Part3.setSize(80, 40);
         Part3.setCentrePosition(450, 140);
         Part3.onClick = [this] {
+            std::ifstream fIn("configPING.txt");
+            if (fIn.is_open()) {
+                fprintf(stderr, "successfully open configPING.txt!\n");
+            } else {
+                fprintf(stderr, "failed to open configPING.txt!\n");
+                return;
+            }
             pingFrame.type = Config::PING;
-            pingFrame.ip = GlobalConfig().get(Config::NODE3, Config::UDP).ip;
-            pingFrame.identifier = "a1b2c3";
-            pingFrame.payload = "hello from caoster & FlashHu";
+            fIn >> pingFrame.ip;
+            pingFrame.identifier = "1";
+            char c;
+            fIn.get(c);
+            while (fIn.get(c) && c != '\n') pingFrame.payload.push_back(c);
             for (pingFrame.seq = 1; pingFrame.seq <= 10; ++pingFrame.seq) {
                 MyTimer timer;
                 writer->send(pingFrame.toFrameType());

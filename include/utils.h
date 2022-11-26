@@ -88,7 +88,9 @@ public:
         std::istringstream sIn(frame.body);
         sIn >> identifier >> seq;
         payload.clear();
-        for (char c; sIn.get(c);) payload.push_back(c);
+        char c;
+        sIn.get(c);
+        while (sIn.get(c)) payload.push_back(c);
     }
 };
 
