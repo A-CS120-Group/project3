@@ -4,6 +4,7 @@
 #include <boost/crc.hpp>
 #include <chrono>
 #include <functional>
+#include <sstream>
 
 #define NOT_REACHED                                                                                                                                                                \
     do { exit(123); } while (false);
@@ -43,6 +44,7 @@ template<class T>
  * BODY
  * CRC
  */
+class ICMPFrameType;
 class FrameType {
 public:
     LENType len = 0;
@@ -65,7 +67,33 @@ public:
     }
 };
 
-using ProcessorType = std::function<void(const FrameType &)>;
+class ICMPFrameType {
+public:
+    int type;
+    std::string ip;
+    std::string identifier;
+    int seq;
+    std::string payload;
+    [[nodiscard]] FrameType toFrameType() const {
+        std::string body = identifier;
+        body += ' ';
+        body += std::to_string(seq);
+        body += ' ';
+        body += payload;
+        return {(TYPEType) type, Str2IPType(ip), 0, body};
+    }
+    void fromFrameType(const FrameType &frame) {
+        type = frame.type;
+        ip = IPType2Str(frame.ip);
+        std::istringstream sIn(frame.body);
+        sIn >> identifier >> seq;
+        payload.clear();
+        for (char c; sIn.get(c);) payload.push_back(c);
+    }
+};
+
+using ProcessorType = std::function<void(FrameType &)>;
+using ICMPProcessorType = std::function<void(ICMPFrameType &)>;
 
 using std::chrono::steady_clock;
 

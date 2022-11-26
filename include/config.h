@@ -11,7 +11,7 @@
 class Config {
 public:
     enum Node { NODE1 = 1, NODE2 = 2, NODE3 = 3 };
-    enum Type { UDP = 1, TCP = 2, ICMP = 3 };
+    enum Type { UDP = 1, TCP = 2, PING = 3, PONG = 4 };
 
     std::string ip;
     int port;

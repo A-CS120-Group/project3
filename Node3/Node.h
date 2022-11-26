@@ -1,4 +1,5 @@
 #include "../include/UDP.h"
+#include "../include/ICMP.h"
 #include "../include/config.h"
 #include "../include/utils.h"
 #include <JuceHeader.h>
@@ -53,13 +54,28 @@ public:
     }
 
     void initSockets() {
-        auto processFunc = [this](const FrameType &frame) {// NAT
-            if (frame.type == Config::UDP) fprintf(stderr, "SUCCEED! %s:%u %s\n", IPType2Str(frame.ip).c_str(), frame.port, frame.body.c_str());
-            else
-                ;
+        auto processUDP = [](FrameType &frame) {
+            if (frame.type == Config::UDP) {
+                // receive UDP
+                fprintf(stderr, "receive UDP! %s:%u %s\n", IPType2Str(frame.ip).c_str(), frame.port, frame.body.c_str());
+            }
         };
-        UDP_socket = new UDP(globalConfig.get(Config::NODE3, Config::UDP).port, processFunc);
+        UDP_socket = new UDP(globalConfig.get(Config::NODE3, Config::UDP).port, processUDP);
         UDP_socket->startThread();
+
+        auto processICMP = [](ICMPFrameType &frame) {
+            if (frame.type == Config::PING) {
+                // send PONG
+                fprintf(stderr, "receive PING! %s %s\n", frame.ip.c_str(), frame.payload.c_str());
+                frame.type = Config::PONG;
+                ICMP::send(frame);
+            } else if (frame.type == Config::PONG) {
+                // receive PONG
+                fprintf(stderr, "receive PONG! %s %s\n", frame.ip.c_str(), frame.payload.c_str());
+            }
+        };
+        ICMP_socket = new ICMP(globalConfig.get(Config::NODE3, Config::UDP).ip, processICMP);
+        ICMP_socket->startThread();
     }
 
     void destroySockets() { delete UDP_socket; }
@@ -75,6 +91,7 @@ private:
     // Ethernet related
     GlobalConfig globalConfig{};
     UDP *UDP_socket{nullptr};
+    ICMP *ICMP_socket{nullptr};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainContentComponent)
 };

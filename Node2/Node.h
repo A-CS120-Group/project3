@@ -1,9 +1,9 @@
+#include "../include/ICMP.h"
 #include "../include/UDP.h"
 #include "../include/config.h"
 #include "../include/reader.h"
 #include "../include/utils.h"
 #include "../include/writer.h"
-#include "../include/ICMP.h"
 #include <JuceHeader.h>
 #include <fstream>
 #include <queue>
@@ -50,12 +50,14 @@ public:
 
 private:
     void initThreads() {
-        auto processFunc = [this](const FrameType &frame) { // NAT
-            fprintf(stderr, "\t\tNAT\n");
+        auto processFunc = [this](const FrameType &frame) {
+            fprintf(stderr, "\t\tNAT from AtherNet to EtherNet\n");
             if (frame.type == Config::UDP) UDP_socket->send(frame.body, IPType2Str(frame.ip), frame.port);
-            else if (frame.type == Config::ICMP) ICMP::send; // TODO: here, send something
-            else
-                ;
+            else if (frame.type == Config::PING || frame.type == Config::PONG) {
+                ICMPFrameType iFrame;
+                iFrame.fromFrameType(frame);
+                ICMP::send(iFrame);
+            }
         };
         reader = new Reader(&directInput, &directInputLock, processFunc);
         reader->startThread();
@@ -63,16 +65,18 @@ private:
     }
 
     void initSockets() {
-        auto processFunc = [this](const FrameType &frame) { // NAT
+        fprintf(stderr, "\t\tNAT from EtherNet to AtherNet\n");
+        auto processUDP = [this](FrameType &frame) {// NAT
             if (frame.type == Config::UDP) writer->send(frame);
-            else
-                ;
         };
-        UDP_socket = new UDP(globalConfig.get(Config::NODE1, Config::UDP).port, processFunc);
+        UDP_socket = new UDP(globalConfig.get(Config::NODE2, Config::UDP).port, processUDP);
         UDP_socket->startThread();
-        // IP address is the same
-        icmp_receiver = new ICMP(globalConfig.get(Config::NODE2, Config::UDP).ip, nullptr);
-        icmp_receiver->startThread();
+
+        auto processICMP = [this](ICMPFrameType &frame) {// NAT
+            writer->send(frame.toFrameType());
+        };
+        ICMP_socket = new ICMP(globalConfig.get(Config::NODE2, Config::UDP).ip, processICMP);
+        ICMP_socket->startThread();
     }
 
     void prepareToPlay([[maybe_unused]] int samplesPerBlockExpected, [[maybe_unused]] double sampleRate) override {
@@ -123,11 +127,9 @@ private:
     void destroySockets() { delete UDP_socket; }
 
 private:
-    // Handler
+    // AtherNet related
     Reader *reader{nullptr};
     Writer *writer{nullptr};
-
-    // Physical Layer
     std::queue<float> directInput;
     CriticalSection directInputLock;
     std::queue<float> directOutput;
@@ -141,7 +143,7 @@ private:
     // Ethernet related
     GlobalConfig globalConfig{};
     UDP *UDP_socket{nullptr};
-    ICMP *icmp_receiver{nullptr};
+    ICMP *ICMP_socket{nullptr};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainContentComponent)
 };

@@ -46,11 +46,22 @@ public:
         };
         addAndMakeVisible(Part2CK1);
 
-        Node2Button.setButtonText("---");
-        Node2Button.setSize(80, 40);
-        Node2Button.setCentrePosition(450, 140);
-        Node2Button.onClick = [] {};
-        addAndMakeVisible(Node2Button);
+        Part3.setButtonText("Part3 Ping 1->3");
+        Part3.setSize(80, 40);
+        Part3.setCentrePosition(450, 140);
+        Part3.onClick = [this] {
+            pingFrame.type = Config::PING;
+            pingFrame.ip = GlobalConfig().get(Config::NODE3, Config::UDP).ip;
+            pingFrame.identifier = "a1b2c3";
+            pingFrame.payload = "hello from caoster & FlashHu";
+            for (pingFrame.seq = 1; pingFrame.seq <= 10; ++pingFrame.seq) {
+                MyTimer timer;
+                writer->send(pingFrame.toFrameType());
+                while (timer.duration() < 1.0)
+                    ;
+            }
+        };
+        addAndMakeVisible(Part3);
 
         setSize(600, 300);
         setAudioChannels(1, 1);
@@ -60,10 +71,24 @@ public:
 
 private:
     void initThreads() {
-        auto processFunc = [this](const FrameType &frame) {
-            if (frame.type == Config::UDP) fprintf(stderr, "SUCCEED! %s:%u %s\n", IPType2Str(frame.ip).c_str(), frame.port, frame.body.c_str());
-            else
-                ;
+        auto processFunc = [this](FrameType &frame) {
+            if (frame.type == Config::UDP) {
+                // receive UDP
+                fprintf(stderr, "receive UDP! %s:%u %s\n", IPType2Str(frame.ip).c_str(), frame.port, frame.body.c_str());
+            } else if (frame.type == Config::PING) {
+                // send PONG
+                fprintf(stderr, "receive PING! %s %s\n", IPType2Str(frame.ip).c_str(), frame.body.c_str());
+                frame.type = Config::PONG;
+                writer->send(frame);
+            } else if (frame.type == Config::PONG) {
+                // receive PONG
+                ICMPFrameType pongFrame;
+                pongFrame.fromFrameType(frame);
+                if (pingFrame.ip == pongFrame.ip && pingFrame.seq == pongFrame.seq) {
+                    // PING and PONG match
+                    fprintf(stderr, "receive PONG! %s %s\n", pongFrame.ip.c_str(), frame.body.c_str());
+                }
+            }
         };
         reader = new Reader(&directInput, &directInputLock, processFunc);
         reader->startThread();
@@ -116,11 +141,12 @@ private:
     }
 
 private:
-    // Handler
+    // PING
+    ICMPFrameType pingFrame;
+
+    // AtherNet related
     Reader *reader{nullptr};
     Writer *writer{nullptr};
-
-    // Physical Layer
     std::queue<float> directInput;
     CriticalSection directInputLock;
     std::queue<float> directOutput;
@@ -129,7 +155,7 @@ private:
     // GUI related
     juce::Label titleLabel;
     juce::TextButton Part2CK1;
-    juce::TextButton Node2Button;
+    juce::TextButton Part3;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainContentComponent)
 };

@@ -49,7 +49,7 @@ while True:
         identifier = message[2]
         seq = message[3]
         icmp_payload = message[4]
-        # mode = "request"  # or reply
+        # mode = "3"  # or 4
         # dst_ip_addr = "192.168.1.101"
         # identifier = "6566"
         # seq = "14"
@@ -62,9 +62,9 @@ while True:
         icmp_request_head = bytearray(b"\x08\x00\x00\x00\x00\x00\x00\x00")
         icmp_reply_head = bytearray(b"\x00\x00\x00\x00\x00\x00\x00\x00")
         ip_payload = bytearray()
-        if mode == "request":
+        if mode == "3":
             ip_payload = icmp_request_head + icmp_payload
-        elif mode == "reply":
+        elif mode == "4":
             ip_payload = icmp_reply_head + icmp_payload
         else:
             print(f"Wrong format!: {mode}")

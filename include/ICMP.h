@@ -7,7 +7,7 @@
 #include "ipv4_header.h"
 #include "utils.h"
 #include <JuceHeader.h>
-
+#include <sstream>
 #include <utility>
 
 class ICMP : public Thread {
@@ -18,7 +18,9 @@ public:
 
     ICMP(const ICMP &&) = delete;
 
-    explicit ICMP(std::string self, ProcessorType processFunc) : Thread("ICMP"), self_ip(std::move(self)) { fprintf(stderr, "\t\tICMP Thread Start\n"); }
+    explicit ICMP(std::string self, ICMPProcessorType processFunc) : Thread("ICMP"), self_ip(std::move(self)), process(std::move(processFunc)) {
+        fprintf(stderr, "\t\tICMP Thread Start\n");
+    }
 
     ~ICMP() override {
         this->signalThreadShouldExit();
@@ -29,21 +31,18 @@ public:
         while (!threadShouldExit()) {
             // Read from pipe
             std::ifstream pipe("./py2cpp");
-            std::string src_ip_addr, dst_ip_addr, icmp_type, icmp_identifier, icmp_seq, icmp_payload;
-            pipe >> src_ip_addr >> dst_ip_addr >> icmp_type >> icmp_identifier >> icmp_seq >> icmp_payload;
+            std::string src_ip_addr;
+            ICMPFrameType frame;
+            pipe >> src_ip_addr >> frame.ip >> frame.type >> frame.identifier >> frame.seq >> frame.payload;
             if (src_ip_addr.empty()) continue;
-            if (dst_ip_addr != self_ip) continue;
+            if (frame.ip != self_ip) continue;
             // Discard other packs
-            std::cerr << "receive: " << src_ip_addr << dst_ip_addr << icmp_type << icmp_identifier << icmp_seq << icmp_payload;
-            // type = "request"  # or reply
-
-            // TODO: Throw into Athernet
-            //            FrameType frame{Config::ICMP, line2, std::string(buffer, len)};
-            //            process(frame);
+            std::cerr << "receive: " << src_ip_addr << frame.ip << frame.type << frame.identifier << frame.seq << frame.payload;
+            process(frame);
         }
     }
 
-    static void send(const std::string &type, const std::string &ip, const std::string &identifier, int seq, const std::string &icmp_payload) {
+    static void send(const ICMPFrameType& frame) {
         // Write to pipe
         std::ofstream pipe("./cpp2py");
         // mode = "request"  # or reply
@@ -51,12 +50,13 @@ public:
         // identifier = "6566"
         // seq = "14"
         // icmp_payload = "61626364"
-        pipe << type << " " << ip << " " << identifier << " " << seq << icmp_payload << std::endl;
+        pipe << frame.type << ' ' << frame.ip << ' ' << frame.identifier << ' ' << frame.seq << ' ' << frame.payload << std::endl;
         fprintf(stderr, "\t\tICMP sent\n");
     }
 
 private:
     std::string self_ip;
+    ICMPProcessorType process;
 };
 
 #endif//ICMP_H

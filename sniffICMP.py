@@ -26,9 +26,9 @@ while True:
     # first two hex
     icmp_type = ip_payload_str[0:2]
     if icmp_type == "08":
-        icmp_type = "request"
+        icmp_type = "3"
     elif icmp_type == "00":
-        icmp_type = "reply"
+        icmp_type = "4"
     else:
         print("Discard due to invalid icmp type!")
         pipe.close()
