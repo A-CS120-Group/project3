@@ -1,3 +1,5 @@
+import os
+
 from scapy.all import *
 
 # This file is for Node2 only
@@ -11,7 +13,8 @@ except OSError as oe:
         raise
 
 while True:
-    pipe = open(FIFO_pipe, "w")
+    # pipe = open(FIFO_pipe, "w")
+    pipe = os.open(FIFO_pipe, os.O_WRONLY)
     print("Open")
     pkt = sniff(filter='icmp', count=1)
     ip_payload = bytes(pkt[0]['IP'].payload)
@@ -28,7 +31,7 @@ while True:
         icmp_type = "4"
     else:
         print("Discard due to invalid icmp type!")
-        pipe.close()
+        os.close(pipe)
         continue
 
     # I don't know what the code do, just take it.
@@ -42,22 +45,32 @@ while True:
 
     if len(ip_payload_str) == 16:
         print("Discard, I don't like packages with no payload!")
-        pipe.close()
+        os.close(pipe)
         continue
     icmp_payload = ip_payload_str[16:]
 
     # hello
     # if "68656c6c6f" not in icmp_payload and icmp_type == "3":
     #     print("Discard due to wrong payload")
-    #     pipe.close()
+    #     os.close(pipe)
     #     continue
 
+    # if src_ip_addr == "192.168.1.1":
+    #     print("ignore 192.168.1.1")
+    #     os.close(pipe)
+    #     continue
+    if dst_ip_addr != "10.20.192.149":
+        print("Not for me")
+        os.close(pipe)
+        continue
     print(src_ip_addr)
     print(dst_ip_addr)
     print(icmp_seq)
     print(ip_payload_str)
 
-    pipe.write(src_ip_addr + " " + dst_ip_addr + " " + icmp_type + " " +
-               icmp_identifier + " " + icmp_seq + " " + icmp_payload)
-    pipe.write('\n')
-    pipe.close()
+    newString = src_ip_addr + " " + dst_ip_addr + " " + icmp_type + " " + icmp_identifier + " " + icmp_seq + " " + icmp_payload + '\n'
+    # pipe.write(newString)
+
+    os.write(pipe, bytes(newString, encoding='ascii'))
+
+    os.close(pipe)
